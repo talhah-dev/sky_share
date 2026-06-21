@@ -1,45 +1,25 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Plus, FileText, Clock } from "lucide-react"
 import TextEditor from "@/components/TextEditor"
+import { toast } from "sonner"
+import { timeAgo } from "@/lib/timeAgo"
+import TextListSkeleton from "./skeleton/TextListSkeleton"
 
 interface TextEntry {
     id: string
-    title: string
-    content: string
+    text: string
     createdAt: string
 }
-
-const MOCK_TEXTS: TextEntry[] = [
-    {
-        id: "1",
-        title: "Project notes",
-        content:
-            "Finalize the API endpoints for the file upload flow. Make sure to handle multipart form data and return a signed URL from Vercel Blob.",
-        createdAt: "2 hours ago",
-    },
-    {
-        id: "2",
-        title: "Meeting summary",
-        content:
-            "Discussed the new sharing feature. Users should be able to share text snippets with a generated link. Link expires after 24 hours by default.",
-        createdAt: "Yesterday",
-    },
-    {
-        id: "3",
-        title: "Quick snippet",
-        content: "npm install drizzle-orm drizzle-kit @neondatabase/serverless",
-        createdAt: "3 days ago",
-    },
-]
 
 type View = "list" | "editor"
 
 export default function TextShare() {
-    const [texts] = useState<TextEntry[]>(MOCK_TEXTS)
+    const [texts, setTexts] = useState<TextEntry[]>([])
     const [view, setView] = useState<View>("list")
     const [selected, setSelected] = useState<TextEntry | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     const openNew = () => {
         setSelected(null)
@@ -56,14 +36,41 @@ export default function TextShare() {
         setView("list")
     }
 
-    const preview = (content: string) =>
-        content.length > 72 ? content.slice(0, 72).trimEnd() + "…" : content
+    // const preview = (content: string) =>
+    //     content.length > 72 ? content.slice(0, 72).trimEnd() + "…" : content
+
+    useEffect(() => {
+        const getText = async () => {
+            try {
+                const res = await fetch("/api/text", {
+                    method: "GET",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                })
+
+                if (!res.ok) {
+                    toast.error("Failed to fetch texts")
+                    return
+                }
+
+                const data = await res.json()
+                setTexts(data)
+                console.log(data)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        void getText()
+    }, [])
 
     if (view === "editor") {
         return (
             <TextEditor
-                initialContent={selected?.content ?? ""}
+                initialContent={selected?.text ?? ""}
                 mode={selected ? "view" : "create"}
+                textId={selected?.id}
                 onBack={goBack}
             />
         )
@@ -83,7 +90,14 @@ export default function TextShare() {
             </button>
 
             {/* Saved list */}
-            {texts.length > 0 && (
+            {isLoading ? (
+                <div className="space-y-2">
+                    <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground px-0.5">
+                        Saved
+                    </p>
+                    <TextListSkeleton />
+                </div>
+            ) : texts.length > 0 ? (
                 <div className="space-y-2">
                     <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground px-0.5">
                         Saved
@@ -93,24 +107,21 @@ export default function TextShare() {
                             <button
                                 key={entry.id}
                                 onClick={() => openEntry(entry)}
-                                className="w-full flex items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/40"
+                                className="w-full cursor-pointer flex items-start gap-3 px-4 py-3.5 text-left transition-colors hover:bg-muted/40"
                             >
                                 <FileText className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-                                <div className="min-w-0 flex-1 space-y-0.5">
-                                    <p className="text-sm font-medium leading-none truncate">{entry.title}</p>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">
-                                        {preview(entry.content)}
-                                    </p>
+                                <div className="w-full pt-0.5">
+                                    <p className="text-sm font-medium leading-none">{entry.text.slice(0, 20)}</p>
                                 </div>
                                 <span className="flex items-center gap-1 shrink-0 text-[11px] text-muted-foreground/60 mt-0.5">
                                     <Clock className="h-3 w-3" />
-                                    {entry.createdAt}
+                                    {timeAgo(entry.createdAt)}
                                 </span>
                             </button>
                         ))}
                     </div>
                 </div>
-            )}
+            ) : null}
         </div>
     )
 }

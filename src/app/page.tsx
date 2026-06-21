@@ -6,7 +6,7 @@ import { File, Type } from "lucide-react"
 export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center px-4">
-      <div className="w-full max-w-xl space-y-6">
+      <div className="w-full max-w-xl space-y-6 py-8">
 
         <div className="text-center space-y-1">
           <h1 className="text-2xl font-semibold tracking-tight">SkyShare</h1>
@@ -15,15 +15,15 @@ export default function Home() {
           </p>
         </div>
 
-        <Tabs defaultValue="file" className="w-full">
+        <Tabs defaultValue="text" className="w-full">
           <TabsList className="w-full">
-            <TabsTrigger value="file" className="flex-1 gap-2">
-              <File className="w-4 h-4" />
-              File
-            </TabsTrigger>
             <TabsTrigger value="text" className="flex-1 gap-2">
               <Type className="w-4 h-4" />
               Text
+            </TabsTrigger>
+            <TabsTrigger value="file" className="flex-1 gap-2">
+              <File className="w-4 h-4" />
+              File
             </TabsTrigger>
           </TabsList>
 
