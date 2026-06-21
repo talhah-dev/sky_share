@@ -3,12 +3,14 @@ import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { textTable } from "@/models/schema";
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await params;
+
         const [entry] = await db
             .select()
             .from(textTable)
-            .where(eq(textTable.id, Number(params.id)));
+            .where(eq(textTable.id, Number(id)));
 
         if (!entry) {
             return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -24,8 +26,9 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await params;
         const { text } = await req.json();
 
         if (!text || typeof text !== "string") {
@@ -35,7 +38,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         const [updated] = await db
             .update(textTable)
             .set({ text })
-            .where(eq(textTable.id, Number(params.id)))
+            .where(eq(textTable.id, Number(id)))
             .returning();
 
         if (!updated) {
@@ -48,11 +51,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
+        const { id } = await params;
+
         const [deleted] = await db
             .delete(textTable)
-            .where(eq(textTable.id, Number(params.id)))
+            .where(eq(textTable.id, Number(id)))
             .returning();
 
         if (!deleted) {

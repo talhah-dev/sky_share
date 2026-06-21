@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ArrowLeft, Copy, Check } from "lucide-react"
+import { ArrowLeft, Copy, Check, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
@@ -22,6 +22,8 @@ export default function TextEditor({
     const [content, setContent] = useState(initialContent)
     const [copied, setCopied] = useState(false)
     const [isLoading, setIsLoading] = useState(mode === "view" && Boolean(textId))
+    const [isSaving, setIsSaving] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         if (mode !== "view" || !textId) return
@@ -65,27 +67,68 @@ export default function TextEditor({
         setTimeout(() => setCopied(false), 2000)
     }
 
-    const createTextHandler = async () => {
-        if (!content) {
+    const handleSaveOrUpdate = async () => {
+        if (!content.trim()) {
             toast.error("Content is required")
             return
         }
 
-        const res = await fetch("/api/text", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ text: content }),
-        })
+        setIsSaving(true)
 
-        if (!res.ok) {
-            toast.error("Failed to save text")
-            return
+        try {
+            const res =
+                mode === "view" && textId
+                    ? await fetch(`/api/text/${textId}`, {
+                          method: "PATCH",
+                          headers: {
+                              "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ text: content }),
+                      })
+                    : await fetch("/api/text", {
+                          method: "POST",
+                          headers: {
+                              "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({ text: content }),
+                      })
+
+            if (!res.ok) {
+                toast.error(mode === "view" ? "Failed to update text" : "Failed to save text")
+                return
+            }
+
+            const data = await res.json()
+            if (mode === "view") {
+                setContent(data.text ?? content)
+            }
+
+            toast.success(mode === "view" ? "Text updated successfully" : "Text saved successfully")
+        } finally {
+            setIsSaving(false)
         }
+    }
 
-        await res.json()
-        toast.success("Text saved successfully")
+    const handleDelete = async () => {
+        if (!textId) return
+
+        setIsDeleting(true)
+
+        try {
+            const res = await fetch(`/api/text/${textId}`, {
+                method: "DELETE",
+            })
+
+            if (!res.ok) {
+                toast.error("Failed to delete text")
+                return
+            }
+
+            toast.success("Text deleted successfully")
+            onBack()
+        } finally {
+            setIsDeleting(false)
+        }
     }
 
     return (
@@ -114,18 +157,29 @@ export default function TextEditor({
                                 onChange={(e) => setContent(e.target.value)}
                                 className="resize-none text-sm font-mono leading-relaxed min-h-80"
                             />
-                            <p className="text-[11px] text-muted-foreground/50">
-                                Text will delete automatically after 1 day
-                            </p>
                         </div>
 
-                        <div className="flex items-center justify-end gap-2 pt-1">
+                        <div className="flex items-center justify-end gap-2">
+                            {mode === "view" && textId ? (
+                                <Button
+                                    size="lg"
+                                    variant="outline"
+                                    onClick={handleDelete}
+                                    disabled={isSaving || isDeleting}
+                                    className="gap-2 text-destructive hover:text-destructive"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    {isDeleting ? "Deleting..." : "Delete"}
+                                </Button>
+                            ) : null}
+
                             <Button size="lg" variant="outline" onClick={handleCopy} className="gap-2">
                                 {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
                                 {copied ? "Copied" : "Copy"}
                             </Button>
-                            <Button size="lg" className="w-20" onClick={createTextHandler}>
-                                {mode === "view" ? "Update" : "Save"}
+
+                            <Button size="lg" className="w-24" onClick={handleSaveOrUpdate} disabled={isSaving}>
+                                {isSaving ? "Saving..." : mode === "view" ? "Update" : "Save"}
                             </Button>
                         </div>
                     </>
