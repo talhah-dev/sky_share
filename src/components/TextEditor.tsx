@@ -114,6 +114,9 @@ export default function TextEditor({
                                 onChange={(e) => setContent(e.target.value)}
                                 className="resize-none text-sm font-mono leading-relaxed min-h-80"
                             />
+                            <p className="text-[11px] text-muted-foreground/50">
+                                Text will delete automatically after 1 day
+                            </p>
                         </div>
 
                         <div className="flex items-center justify-end gap-2 pt-1">

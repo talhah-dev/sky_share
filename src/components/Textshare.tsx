@@ -87,6 +87,9 @@ export default function TextShare() {
                     <Plus className="h-5 w-5 text-muted-foreground" />
                 </span>
                 <span className="text-xs text-muted-foreground">New text</span>
+                <span className="text-[11px] text-muted-foreground/50">
+                    Text will delete automatically after 1 day
+                </span>
             </button>
 
             {/* Saved list */}

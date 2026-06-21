@@ -304,7 +304,9 @@ export default function FileShare() {
     }
 
     const uploadLabel = isUploading ? `Uploading ${uploadProgress}%` : dragging ? "Drop to upload" : "Upload a file"
-    const uploadSubLabel = isUploading ? "Please wait while your file is uploading" : "Max 100 MB · any file type"
+    const uploadSubLabel = isUploading
+        ? "Please wait while your file is uploading"
+        : "Max 100 MB · files delete automatically after 1 day"
 
     return (
         <div className="mt-2 space-y-5">
