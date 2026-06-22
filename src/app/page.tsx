@@ -9,7 +9,7 @@ export default function Home() {
       <div className="w-full max-w-xl space-y-6 py-8">
 
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">SkyShare</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">My AirForShare</h1>
           <p className="text-sm text-muted-foreground">
             Share files and text with anyone, anywhere.
           </p>
